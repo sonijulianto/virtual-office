@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Virtual Office AI Agent - 3D Isometric Cutaway</title>
+  
+  <!-- Plus Jakarta Sans Font (Persis seperti kantor-ai) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/static/css/style.css?v=15">
+  
+  <!-- Three.js & OrbitControls -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  
+  <!-- Socket.IO Client -->
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+</head>
+<body>
+
+  <!-- WebGL 3D Canvas Container -->
+  <div id="canvas-container"></div>
+
+  <!-- FLOATING WHITE AGENT CARDS -->
+  <div id="card-receptionist" class="agent-card" onclick="selectAndChatWithAgent('receptionist')">
+    <div class="agent-card-header">
+      <div class="agent-card-dot" id="dot-receptionist"></div>
+      <span class="agent-card-name">Sarah</span>
+      <span class="agent-card-role">Front Desk</span>
+    </div>
+    <div class="agent-card-activity" id="act-receptionist">Mengecek jadwal tamu</div>
+  </div>
+
+  <div id="card-marketing" class="agent-card" onclick="selectAndChatWithAgent('marketing')">
+    <div class="agent-card-header">
+      <div class="agent-card-dot" id="dot-marketing"></div>
+      <span class="agent-card-name">Clara</span>
+      <span class="agent-card-role">Marketing</span>
+    </div>
+    <div class="agent-card-activity" id="act-marketing">Menyusun ide Reels viral</div>
+  </div>
+
+  <div id="card-developer" class="agent-card" onclick="selectAndChatWithAgent('developer')">
+    <div class="agent-card-header">
+      <div class="agent-card-dot" id="dot-developer"></div>
+      <span class="agent-card-name">Alex</span>
+      <span class="agent-card-role">Tech Lead</span>
+    </div>
+    <div class="agent-card-activity" id="act-developer">Review arsitektur sistem</div>
+  </div>
+
+  <div id="card-manager" class="agent-card" onclick="selectAndChatWithAgent('manager')">
+    <div class="agent-card-header">
+      <div class="agent-card-dot" id="dot-manager"></div>
+      <span class="agent-card-name">Budi</span>
+      <span class="agent-card-role">Manager</span>
+    </div>
+    <div class="agent-card-activity" id="act-manager">Menyampaikan arahan</div>
+  </div>
+
+  <div id="card-faisal" class="agent-card" onclick="selectAndChatWithAgent('faisal')">
+    <div class="agent-card-header">
+      <div class="agent-card-dot" id="dot-faisal"></div>
+      <span class="agent-card-name">Faisal Ravaneli</span>
+      <span class="agent-card-role">One-Asco Dev</span>
+    </div>
+    <div class="agent-card-activity" id="act-faisal">Coding one-asco/mobile</div>
+  </div>
+
+  <div id="card-syaugi" class="agent-card" onclick="selectAndChatWithAgent('syaugi')">
+    <div class="agent-card-header">
+      <div class="agent-card-dot" id="dot-syaugi"></div>
+      <span class="agent-card-name">Syaugi Askar</span>
+      <span class="agent-card-role">TPF POS Dev</span>
+    </div>
+    <div class="agent-card-activity" id="act-syaugi">Coding tpf_pos_mobile</div>
+  </div>
+
+  <div id="card-guntara" class="agent-card" onclick="selectAndChatWithAgent('guntara')">
+    <div class="agent-card-header">
+      <div class="agent-card-dot" id="dot-guntara"></div>
+      <span class="agent-card-name">Guntara Gumelar</span>
+      <span class="agent-card-role">Pivore Dev</span>
+    </div>
+    <div class="agent-card-activity" id="act-guntara">Coding pivore_mobile</div>
+  </div>
+
+  <div id="card-lisa" class="agent-card" onclick="selectAndChatWithAgent('lisa')">
+    <div class="agent-card-header">
+      <div class="agent-card-dot" id="dot-lisa"></div>
+      <span class="agent-card-name">Lisa</span>
+      <span class="agent-card-role">Finance (BCA/BRI)</span>
+    </div>
+    <div class="agent-card-activity" id="act-lisa">Cek email BCA & BRI</div>
+  </div>
+
+  <!-- EXPANDED SPEECH BUBBLES (Muncul saat menjawab chat user) -->
+  <div id="bubble-receptionist" class="world-bubble">
+    <div class="bubble-sender">👩 Sarah • Front Desk</div>
+    <div class="bubble-text"></div>
+  </div>
+
+  <div id="bubble-marketing" class="world-bubble">
+    <div class="bubble-sender">🎨 Clara • Creative & Marketing</div>
+    <div class="bubble-text"></div>
+  </div>
+
+  <div id="bubble-developer" class="world-bubble">
+    <div class="bubble-sender">💻 Alex • Tech Lead</div>
+    <div class="bubble-text"></div>
+  </div>
+
+  <div id="bubble-manager" class="world-bubble">
+    <div class="bubble-sender">📊 Budi • Project Manager</div>
+    <div class="bubble-text"></div>
+  </div>
+
+  <div id="bubble-faisal" class="world-bubble">
+    <div class="bubble-sender">📱 Faisal Ravaneli • Fullstack (One-Asco Mobile)</div>
+    <div class="bubble-text"></div>
+  </div>
+
+  <div id="bubble-syaugi" class="world-bubble">
+    <div class="bubble-sender">🏪 Syaugi Askar • Fullstack (TPF POS Mobile)</div>
+    <div class="bubble-text"></div>
+  </div>
+
+  <div id="bubble-guntara" class="world-bubble">
+    <div class="bubble-sender">📦 Guntara Gumelar • Fullstack (Pivore Mobile)</div>
+    <div class="bubble-text"></div>
+  </div>
+
+  <div id="bubble-lisa" class="world-bubble">
+    <div class="bubble-sender">💰 Lisa • Finance & Mutasi Bank (BCA & BRI)</div>
+    <div class="bubble-text"></div>
+  </div>
+
+  <!-- DEDICATED SLIDING CHAT PANEL (Persis kantor-ai-agent-local-main) -->
+  <aside id="chat-panel" class="chat-panel" aria-label="Percakapan Agen" aria-hidden="true">
+    <!-- Panel Header -->
+    <div class="panel-head">
+      <div id="panel-avatar" class="panel-avatar">
+        <span id="panel-avatar-text">FR</span>
+        <div class="panel-avatar-status"></div>
+      </div>
+      <div class="panel-who">
+        <div class="panel-name-row">
+          <strong id="panel-who-name">Faisal Ravaneli</strong>
+          <span id="panel-status-pill" class="panel-badge-online">Online</span>
+        </div>
+        <span id="panel-who-role" class="panel-role">Senior Fullstack Developer</span>
+        <div id="panel-workspace-badge" class="panel-workspace-badge" title="Project Workspace yang Dikerjakan">
+          <span class="ws-icon">📁</span> <span id="panel-workspace-text">one-asco-ecosystem/mobile</span>
+        </div>
+      </div>
+      <div class="panel-actions">
+        <button id="btn-panel-reset" class="panel-icon-btn" title="Mulai percakapan baru / reset chat" aria-label="Reset chat">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+        </button>
+        <button id="btn-panel-close" class="panel-icon-btn" title="Tutup panel chat (Esc)" aria-label="Tutup chat">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Colleague Switcher Bar (Rekan Tim Kantor) -->
+    <div class="panel-mates-wrapper">
+      <div class="panel-mates-label">Pilih Karakter Agen:</div>
+      <div class="panel-mates-bar" id="panel-mates-bar">
+        <!-- Generated dynamically via app.js -->
+      </div>
+    </div>
+
+    <!-- Chat Messages Scroll Container -->
+    <div id="panel-messages" class="panel-messages" role="log" aria-live="polite">
+      <!-- Dynamic messages injected here -->
+    </div>
+
+    <!-- Quick Prompts specific to current agent -->
+    <div id="panel-quick" class="panel-quick">
+      <!-- Dynamic chips injected here -->
+    </div>
+
+    <!-- Chat Composer Form -->
+    <form id="panel-composer" class="panel-composer" autocomplete="off">
+      <div class="composer-workspace-row">
+        <span class="composer-ws-label">🎯 Workspace Target:</span>
+        <select id="panel-project-select" class="panel-project-select" title="Pilih folder repositori untuk eksekusi tugas"></select>
+      </div>
+
+      <!-- Pending Media Preview Container -->
+      <div id="panel-media-preview" class="media-preview-container" style="display: none;"></div>
+
+      <div class="composer-input-row">
+        <input type="file" id="panel-file-input" accept="image/*,video/*" style="display: none;" />
+        <button id="btn-panel-attach" type="button" class="btn-attach" title="Lampirkan Gambar atau Video (Screenshot error, struk bank, rekaman layar)">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+          </svg>
+        </button>
+        <textarea 
+          id="panel-input" 
+          rows="1" 
+          placeholder="Suruh agen apa saja... atau kirim gambar / video untuk dianalisis..." 
+          maxlength="4000" 
+          enterkeyhint="send"
+        ></textarea>
+        <button id="btn-panel-send" type="submit" aria-label="Kirim Instruksi" title="Kirim Instruksi (Enter)">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14M13 6l6 6-6 6"/>
+          </svg>
+        </button>
+      </div>
+    </form>
+
+    <!-- Panel Footer -->
+    <div class="panel-foot">
+      ⚡ Ditenagai Hermes Agent & Gemini Flash • Eksekusi langsung di project lokal Anda
+    </div>
+  </aside>
+
+  <!-- Interactive Click Hint (Muncul saat tidak sedang chatting) -->
+  <div id="interactive-hint" class="interactive-hint">
+    ✨ Klik karakter 3D mana saja untuk langsung berbicara & memberi tugas!
+  </div>
+
+  <!-- UI Overlay -->
+  <div class="ui-overlay">
+    
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <div class="brand">
+        <div class="brand-icon">🏢</div>
+        <div>
+          <div class="brand-title">Virtual Office AI Agent</div>
+          <div class="brand-badge">Hermes Agent • Gemini Flash • Multi-Project</div>
+        </div>
+      </div>
+
+      <!-- Camera Zone Switcher -->
+      <nav class="camera-controls interactive">
+        <button class="cam-btn active" data-room="overview">📐 Isometric View</button>
+        <button class="cam-btn" data-room="devroom">💻 Ruang Developer</button>
+        <button class="cam-btn" data-room="manager">👔 Ruang Manager</button>
+        <button class="cam-btn" data-room="lounge">🎱 Sofa & Billiard</button>
+        <button class="cam-btn" data-room="pantry">☕ Pantry</button>
+      </nav>
+
+      <!-- Right Controls: Atmosphere Selector, Auto-Report, Workspace, Roam & Status -->
+      <div class="right-controls interactive">
+        <div id="atmosphere-pill" class="status-pill atmosphere-pill mode-sunset" title="Warna Langit & Suasana Kantor Berdasarkan Waktu">
+          <span id="atmosphere-icon" class="atmosphere-icon">🌇</span>
+          <select id="atmosphere-select" class="atmosphere-select" title="Pilih Suasana Waktu (Otomatis sesuai jam real-time atau pilih manual)">
+            <option value="auto">⏱️ Otomatis Waktu</option>
+            <option value="morning">🌅 Pagi (06:00 - 11:00)</option>
+            <option value="noon">☀️ Siang (11:00 - 15:30)</option>
+            <option value="sunset">🌇 Sore (15:30 - 18:45)</option>
+            <option value="night">🌙 Malam (18:45 - 06:00)</option>
+          </select>
+          <span id="atmosphere-clock" class="atmosphere-clock">16:48 WIB</span>
+        </div>
+
+        <div id="auto-report-badge" class="status-pill auto-report-pill" title="Jadwal Otomatis: Setiap hari jam 22:00 WIB dikonfigurasi via .env">
+          ⏰ Auto-Report: 22:00 WIB
+        </div>
+        <div id="email-watcher-badge" class="status-pill email-watcher-pill" onclick="openEmailModal()" title="Real-Time Email Watcher BCA & BRI untuk sonijulianto@gmail.com (Klik untuk Konfigurasi & Uji Coba)">
+          <span id="email-watcher-dot" class="watcher-dot waiting"></span>
+          <span id="email-watcher-label">📧 Gmail: Siap</span>
+        </div>
+        <select id="project-workspace-select" class="project-selector" title="Pilih Folder Project Aplikasi yang Dikerjakan Agen">
+          <option value="auto">🎯 Project: Otomatis (Sesuai Pegangan Agen)</option>
+          <option value="/Users/magnatech/project/one-asco-ecosystem/mobile">📱 one-asco-ecosystem/mobile (Faisal)</option>
+          <option value="/Users/magnatech/project/one-asco-ecosystem">🌐 one-asco-ecosystem [Fullstack] (Faisal)</option>
+          <option value="/Users/magnatech/tpf_pos_mobile">🏪 tpf_pos_mobile (Syaugi)</option>
+          <option value="/Users/magnatech/project/pivore_mobile">📦 pivore_mobile (Guntara)</option>
+        </select>
+        <button id="toggle-roam-btn" class="mode-btn" title="Suruh agen jalan-jalan ke Pantry / Billiard / Sofa atau kembali kerja">
+          🎱 Jam Istirahat
+        </button>
+        <div class="status-pill">
+          <div id="status-dot" class="status-dot"></div>
+          <span id="status-text">Connecting...</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Floating Chat Log Panel -->
+    <aside class="chat-log-panel interactive" id="chat-log-panel">
+      <div class="log-header">
+        <span>💬 Log Aktivitas Kantor</span>
+        <button id="btn-toggle-log" class="log-toggle-btn" title="Minimize log">_</button>
+      </div>
+      <div class="log-body" id="log-body">
+        <div class="log-msg agent">
+          <div class="log-msg-sender">🏢 Sistem Kantor (Hermes Agent Aktif)</div>
+          <div>
+            Tim Fullstack Developer Anda siap bekerja:<br>
+            • <b>Faisal Ravaneli</b> → <code>one-asco-ecosystem/mobile</code><br>
+            • <b>Syaugi Askar</b> → <code>tpf_pos_mobile</code><br>
+            • <b>Guntara Gumelar</b> → <code>pivore_mobile</code><br>
+            <i>💡 Klik karakter di meja kerja untuk membuka panel percakapan langsung!</i>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Bottom HUD -->
+    <footer class="bottom-hud">
+      <!-- Quick Prompt Chips -->
+      <div class="quick-prompts interactive">
+        <button class="prompt-chip" data-prompt="Lisa, tolong cek email sonijulianto@gmail.com sekarang untuk mutasi BCA & BRI hari ini dan buat ringkasannya!" data-target="lisa">💰 Cek Mutasi BCA/BRI (Lisa)</button>
+        <button class="prompt-chip" data-prompt="Budi, kumpulkan laporan progres hari ini dari Faisal, Syaugi, dan Guntara lalu siapkan kirim ke WhatsApp saya!" data-target="manager">📲 Rekap WA Developer (Budi)</button>
+        <button class="prompt-chip" data-prompt="Faisal, cek file pubspec.yaml dan struktur folder lib/ di project one-asco mobile kita, lalu laporkan ringkasannya!" data-target="faisal">📱 Cek One-Asco Mobile (Faisal)</button>
+        <button class="prompt-chip" data-prompt="Syaugi, cek struktur folder lib/ dan pubspec.yaml di project tpf_pos_mobile, lalu jelaskan modul utamanya!" data-target="syaugi">🏪 Cek TPF POS Mobile (Syaugi)</button>
+        <button class="prompt-chip" data-prompt="Guntara, cek isi folder lib/ dan pubspec.yaml di project pivore_mobile, lalu laporkan fitur apa saja yang ada!" data-target="guntara">📦 Cek Pivore Mobile (Guntara)</button>
+        <button class="prompt-chip" data-prompt="Sarah, baca file BUKU_TAMU_HARI_INI.md di workspace lalu sebutkan siapa saja tamu hari ini!" data-target="receptionist">📖 Cek Buku Tamu (Sarah)</button>
+      </div>
+
+      <!-- Pending Media Preview in Bottom Bar -->
+      <div id="bottom-media-preview" class="media-preview-container bottom-preview" style="display: none;"></div>
+
+      <!-- Chat Input Bar -->
+      <div class="chat-container interactive">
+        <select id="target-agent-select" class="agent-selector" title="Pilih Agen / Developer">
+          <option value="auto">🤖 Auto (Supervisor)</option>
+          <option value="lisa">💰 Lisa (Finance BCA/BRI)</option>
+          <option value="faisal">📱 Faisal Ravaneli (One-Asco Mobile)</option>
+          <option value="syaugi">🏪 Syaugi Askar (TPF POS Mobile)</option>
+          <option value="guntara">📦 Guntara Gumelar (Pivore Mobile)</option>
+          <option value="developer">💻 Alex (Tech Lead)</option>
+          <option value="manager">👔 Budi (Project Manager)</option>
+          <option value="marketing">🎨 Clara (Marketing)</option>
+          <option value="receptionist">👩 Sarah (Front Desk)</option>
+        </select>
+        
+        <input type="file" id="bottom-file-input" accept="image/*,video/*" style="display: none;" />
+        <button id="btn-bottom-attach" type="button" class="btn-attach-bottom" title="Lampirkan Gambar atau Video untuk dianalisis">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+          </svg>
+        </button>
+
+        <input 
+          type="text" 
+          id="chat-input" 
+          class="chat-input" 
+          placeholder="Ketik instruksi atau lampirkan gambar/video untuk dianalisis agen..."
+          autocomplete="off"
+        />
+
+        <button id="send-btn" class="send-btn" title="Kirim Pesan">
+          ➤
+        </button>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- MODAL PENGATURAN REAL-TIME EMAIL WATCHER -->
+  <div id="email-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span class="modal-icon">💰</span>
+          <div>
+            <h3>Real-Time Email Watcher & Rekonsiliasi Bank</h3>
+            <p>Pemantauan Mutasi BCA & BRI untuk <code>sonijulianto@gmail.com</code></p>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeEmailModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="status-banner" id="modal-status-banner">
+          <div class="banner-status-indicator" id="modal-indicator">🟡</div>
+          <div class="banner-status-info">
+            <strong id="modal-status-title">Status: Menunggu Sandi Aplikasi</strong>
+            <p id="modal-status-desc">Hubungkan akun Gmail Anda agar Lisa dapat mendeteksi mutasi secara live.</p>
+          </div>
+        </div>
+
+        <div class="config-section">
+          <label class="form-label">Alamat Email Terpantau:</label>
+          <input type="email" id="input-email-user" class="form-input" value="sonijulianto@gmail.com" readonly />
+        </div>
+
+        <div class="config-section">
+          <label class="form-label">Sandi Aplikasi Google (16 Karakter):</label>
+          <div class="input-with-btn">
+            <input type="password" id="input-app-password" class="form-input" placeholder="Masukkan 16 huruf kode Sandi Aplikasi" />
+            <button class="btn btn-primary" onclick="saveEmailCredentialsUI()">💾 Simpan & Hubungkan</button>
+          </div>
+        </div>
+
+        <div class="instructions-card">
+          <h4>📌 Cara Mendapatkan Sandi Aplikasi Gmail (30 Detik):</h4>
+          <ol>
+            <li>Buka <a href="https://myaccount.google.com/security" target="_blank" rel="noopener">Google Account Security (Keamanan)</a>.</li>
+            <li>Pastikan <b>Verifikasi 2 Langkah</b> aktif di akun Anda.</li>
+            <li>Klik menu <b>Sandi Aplikasi (App Passwords)</b>.</li>
+            <li>Beri nama aplikasi, misal <code>AI Kantor Virtual</code>, lalu klik <b>Buat</b>.</li>
+            <li>Salin 16 karakter kode yang muncul dan tempel ke kolom di atas.</li>
+          </ol>
+        </div>
+
+        <div class="action-buttons-row">
+          <button class="btn btn-secondary" onclick="checkInboxNowUI()">🔄 Cek Inbox Sekarang</button>
+          <button class="btn btn-simulate" onclick="simulateIncomingEmailUI()">🧪 Uji Simulasi Email Masuk</button>
+          <button class="btn btn-whatsapp" onclick="triggerFinanceReportNowUI()">📲 Kirim Rekap WA Sekarang</button>
+          <button class="btn btn-secondary" onclick="resetFinanceTransactionsUI()" style="background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.35); color: #fca5a5;">🧹 Bersihkan Data Mutasi (Reset)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main 3D App Script -->
+  <script src="/static/js/app.js?v=16"></script>
+</body>
+</html>
